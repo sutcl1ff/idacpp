@@ -1,0 +1,12 @@
+{
+    "files.exclude": {
+        "**/build": true,
+        "**/build-*": true,
+        "**/.DS_Store": true,
+        "**/__pycache__": true
+    },
+    "search.exclude": {
+        "**/build": true,
+        "**/build-*": true
+    }
+}
