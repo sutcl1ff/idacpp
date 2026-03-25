@@ -10,6 +10,7 @@ contributions. Each plugin lives in its own subdirectory and is self-contained.
 | `common/` | Framework | Shared cmake helpers and public API header |
 | `ida_sdk/` | Built-in | IDA SDK header list — always enabled, loads first |
 | `idax/` | Extension | C++23 IDA SDK wrapper (`-DPLUGIN_IDAX_SRC_DIR=<path>`) |
+| `qt6/` | Extension | Qt6 support — Core, Gui, Widgets (`-DPLUGIN_QT6=ON`) |
 | `winsdk/` | Extension | Windows SDK headers |
 | `template/` | Skeleton | Copy this to create a new plugin |
 

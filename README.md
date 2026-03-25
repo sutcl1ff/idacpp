@@ -110,6 +110,7 @@ idacpp has a plugin system that extends the REPL with additional headers, librar
 | [`idax`](plugins/idax/) | `-DPLUGIN_IDAX_SRC_DIR=<path>` | When source dir is provided | [idax](https://github.com/19h/idax) C++23 SDK wrapper by [Kenan Sulayman](https://github.com/19h) |
 | `winsdk` | `-DPLUGIN_WINSDK=ON` | `WIN32` | Windows SDK headers (windows.h, tlhelp32.h, etc.) |
 | `linux` | `-DPLUGIN_LINUX=ON` | `UNIX AND NOT APPLE` | Linux system headers (sys/mman.h, elf.h, etc.) |
+| [`qt6`](plugins/qt6/) | `-DPLUGIN_QT6=ON` | No | Qt6 Core/Gui/Widgets — UI introspection and dynamic forms |
 
 ### Enable / disable
 

@@ -204,7 +204,6 @@ bool idacpp_t::init_plugin() {
     }
 
     if (hasPch) {
-        msg("idacpp: IDA SDK headers loaded from PCH\n");
         sdk_headers_ready = true;
     } else {
         // No PCH — fall back to header-by-header inclusion
@@ -268,16 +267,14 @@ bool idacpp_t::init_plugin() {
         for (const auto& name : idacpp::plugins::pluginNames())
             plugins += ", " + name;
 
-        std::string line1 = std::string("idacpp v") + IDACPP_VERSION;
-        std::string line2 = "Cling " + clingVer;
+        std::string banner = std::string("idacpp v") + IDACPP_VERSION
+            + " (Cling " + clingVer;
         if (sdk_headers_ready)
-            line2 += " | Plugins: " + plugins;
+            banner += " ; plugins: " + plugins;
+        banner += ")";
 
-        size_t width = std::max(line1.size(), line2.size());
-        std::string sep(width, '-');
-
-        msg("%s\n%s\n%s\n%s\n", sep.c_str(), line1.c_str(),
-            line2.c_str(), sep.c_str());
+        std::string sep(banner.size(), '-');
+        msg("%s\n%s\n%s\n", sep.c_str(), banner.c_str(), sep.c_str());
     }
     return true;
 }

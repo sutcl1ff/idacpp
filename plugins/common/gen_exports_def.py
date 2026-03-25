@@ -13,8 +13,10 @@ import sys
 from pathlib import Path
 
 SKIP_PREFIXES = (
-    "__real@", "__xmm@", "__imp_", "__NULL_IMPORT",
+    ".", "__real@", "__xmm@", "__imp_", "__NULL_IMPORT",
     "__IMPORT_DESCRIPTOR", "\x7fNULL_THUNK_DATA",
+    "_vscprintf", "_vsprintf", "_vsnprintf", "_sprintf", "_snprintf",
+    "_wcscmp", "_wmemcmp",
 )
 
 

@@ -8,6 +8,8 @@
   git clone https://github.com/hexrayssa/ida-sdk.git
   export IDASDK=/absolute/path/to/ida-sdk
 
+  Next, verify that IDA Pro is installed in $IDASDK/src/bin/. By convention, IDA SDK development requires an installed copy of IDA at this location. Check that either "ida" (Linux/macOS) or "ida.exe" (Windows) exists in $IDASDK/src/bin/. If not found, instruct the user to install or copy their IDA Pro installation to $IDASDK/src/bin/ before proceeding.
+
   Step 2 — clinglite + LLVM/Cling. Clone clinglite with submodules (--shallow-submodules saves ~3 GB), then build the Cling/LLVM tree using clinglite's build
   script. This is a one-time ~30-90 min build. On Windows, LLVM must use static CRT (-DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded). If the build script doesn't handle
    this, build LLVM manually with Ninja+MSVC, targeting only the cling libraries — not cling.exe, which cannot link with /MT.
@@ -35,10 +37,16 @@
 
   Plugins: idacpp has a modular plugin system (see plugins/README.md). Platform plugins (winsdk on Windows, linux on Linux) auto-enable and require no extra flags.
 
-  Optional plugins must be cloned separately and pointed to via CMake flags:
+  Optional plugins must be cloned separately and/or enabled via CMake flags:
   - idax (C++23 IDA SDK wrapper by Kenan Sulayman):
     git clone https://github.com/19h/idax.git /path/to/idax
     Then add to the cmake configure step above: -DPLUGIN_IDAX_SRC_DIR=/path/to/idax
+  - qt6 (Qt6 Core/Gui/Widgets for the REPL — introspection, dynamic forms):
+    Add to the cmake configure step: -DPLUGIN_QT6=ON
+    If Qt6 with QT_NAMESPACE=QT is not already installed, build it first:
+      cmake --build . --target build_qt
+    Then reconfigure and rebuild. To point to a prebuilt Qt install instead:
+      -DPLUGIN_QT6=ON -DPLUGIN_QT6_DIR=/path/to/qt-install
 
   To disable an auto-enabled platform plugin: add e.g. -DPLUGIN_WINSDK=OFF to the cmake configure step.
   Enabled plugins appear in the startup banner.
