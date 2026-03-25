@@ -17,6 +17,7 @@
 
 #include "extlang_core.h"
 #include "idalib_setup.h"
+#include "plugins/common/plugin_api.h"
 #include <clinglite/clinglite.h>
 
 #include <algorithm>
@@ -244,6 +245,9 @@ bool idacpp_t::init_plugin() {
         }
     }
 
+    // Run extension plugin setup (idax, winsdk, etc.)
+    idacpp::plugins::setupAll(*interp, hasPch);
+
     g_plugin = this;  // set before registering callbacks that use g_plugin
 
     // Register extlang
@@ -255,17 +259,25 @@ bool idacpp_t::init_plugin() {
     install_command_interpreter(&cli_cpp);
     cli_installed = true;
 
-    if (sdk_headers_ready) {
-        if (ida_runtime_resolved && all_libs_loaded)
-            msg("idacpp: C++ interpreter ready with IDA SDK support\n");
-        else if (ida_runtime_resolved)
-            msg("idacpp: C++ interpreter ready with IDA SDK support"
-                " (partial runtime — some libraries not loaded)\n");
-        else
-            msg("idacpp: C++ interpreter ready with IDA SDK headers"
-                " (runtime symbol load not confirmed)\n");
-    } else {
-        msg("idacpp: C++ interpreter ready (plain REPL mode)\n");
+    // ── Startup banner ────────────────────────────────────────────────────
+    {
+        auto clingVer = clinglite::Environment::version();
+
+        // Build plugin list: ida_sdk (always) + extension plugins
+        std::string plugins = "ida_sdk";
+        for (const auto& name : idacpp::plugins::pluginNames())
+            plugins += ", " + name;
+
+        std::string line1 = std::string("idacpp v") + IDACPP_VERSION;
+        std::string line2 = "Cling " + clingVer;
+        if (sdk_headers_ready)
+            line2 += " | Plugins: " + plugins;
+
+        size_t width = std::max(line1.size(), line2.size());
+        std::string sep(width, '-');
+
+        msg("%s\n%s\n%s\n%s\n", sep.c_str(), line1.c_str(),
+            line2.c_str(), sep.c_str());
     }
     return true;
 }

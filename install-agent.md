@@ -33,4 +33,14 @@
       ..
   cmake --build . --config Release
 
+  Plugins: idacpp has a modular plugin system (see plugins/README.md). Platform plugins (winsdk on Windows, linux on Linux) auto-enable and require no extra flags.
+
+  Optional plugins must be cloned separately and pointed to via CMake flags:
+  - idax (C++23 IDA SDK wrapper by Kenan Sulayman):
+    git clone https://github.com/19h/idax.git /path/to/idax
+    Then add to the cmake configure step above: -DPLUGIN_IDAX_SRC_DIR=/path/to/idax
+
+  To disable an auto-enabled platform plugin: add e.g. -DPLUGIN_WINSDK=OFF to the cmake configure step.
+  Enabled plugins appear in the startup banner.
+
   Step 4 — Verify. Confirm the plugin binary (idacpp.dll, idacpp.so, or idacpp.dylib) was placed in $IDASDK/src/bin/plugins/. Launch IDA and check that the C++ tab appears in the output window.

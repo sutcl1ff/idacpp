@@ -32,7 +32,7 @@ IDA C++ scripts should put all imperative code inside functions with a conventio
 
 int main() {
     int n = get_func_qty();
-    printf("functions: %d\n", n);
+    msg("functions: %d\n", n);
     return 0;
 }
 ```
@@ -40,7 +40,7 @@ int main() {
 **Rules:**
 1. Entrypoint: `int main()` or `int main(int argc, char** argv)`
 2. File scope may contain: `#include` directives, function/class/struct definitions, global variable declarations, `using` directives
-3. **No bare expression statements at file scope** (e.g., `printf(...)`, `vec.push_back(...)`) — these must go inside functions
+3. **No bare expression statements at file scope** (e.g., `msg(...)`, `vec.push_back(...)`) — these must go inside functions
 
 Scripts are loaded and executed via `.x` (CLI) or Alt-F7 (IDA UI). The entrypoint is invoked automatically. Loading the same file again auto-unloads the previous version.
 

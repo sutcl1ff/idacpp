@@ -27,7 +27,7 @@ Select the **C++** tab in IDA's output window:
 
 ```
 C++> auto n = get_func_qty();
-C++> printf("%d functions\n", n);
+C++> msg("%d functions\n", n);
 142 functions
 C++> auto f = get_next_func(0);
 C++> qstring name;
@@ -45,7 +45,7 @@ All declarations persist across lines — variables, functions, and types remain
 #include <segment.hpp>
 
 int main() {
-    printf("%d functions, %d segments\n",
+    msg("%d functions, %d segments\n",
            get_func_qty(), get_segm_qty());
     return 0;
 }
@@ -98,6 +98,50 @@ cmake --build . --config Release
 
 The build produces `idacpp.dll` / `idacpp.so` / `idacpp.dylib`, placed in the IDA SDK plugin directory by CMake. See [BUILDING.md](BUILDING.md) for prerequisites, platform-specific instructions, and build output details.
 
+## Plugins
+
+idacpp has a plugin system that extends the REPL with additional headers, libraries, and PCH contributions. Plugins are auto-discovered from `plugins/*/CMakeLists.txt` and enabled via cmake variables.
+
+### Available plugins
+
+| Plugin | Variable | Auto-enabled | Description |
+|--------|----------|--------------|-------------|
+| `ida_sdk` | *(always on)* | Yes | IDA SDK headers and idalib — the base layer |
+| [`idax`](plugins/idax/) | `-DPLUGIN_IDAX_SRC_DIR=<path>` | When source dir is provided | [idax](https://github.com/19h/idax) C++23 SDK wrapper by [Kenan Sulayman](https://github.com/19h) |
+| `winsdk` | `-DPLUGIN_WINSDK=ON` | `WIN32` | Windows SDK headers (windows.h, tlhelp32.h, etc.) |
+| `linux` | `-DPLUGIN_LINUX=ON` | `UNIX AND NOT APPLE` | Linux system headers (sys/mman.h, elf.h, etc.) |
+
+### Enable / disable
+
+```bash
+# Enable by providing source directory
+cmake .. -DPLUGIN_IDAX_SRC_DIR=/path/to/idax
+
+# Disable an auto-enabled plugin
+cmake .. -DPLUGIN_WINSDK=OFF
+```
+
+In the monorepo, plugins are auto-enabled based on platform and source availability — no flags needed.
+
+### idax examples
+
+The idax plugin includes [example scripts](plugins/idax/examples/) using the C++23 API:
+
+| Script | Description |
+|--------|-------------|
+| [`list_functions.cpp`](plugins/idax/examples/list_functions.cpp) | All functions with addresses and names |
+| [`list_segments.cpp`](plugins/idax/examples/list_segments.cpp) | Segments with ranges and R/W/X permissions |
+| [`database_info.cpp`](plugins/idax/examples/database_info.cpp) | File path, format, processor, bitness, MD5 |
+| [`xrefs_to.cpp`](plugins/idax/examples/xrefs_to.cpp) | Cross-references to the first function |
+| [`callers_callees.cpp`](plugins/idax/examples/callers_callees.cpp) | Call graph of the first function |
+| [`find_calls.cpp`](plugins/idax/examples/find_calls.cpp) | Call instructions with resolved targets |
+| [`imports.cpp`](plugins/idax/examples/imports.cpp) | Import modules and symbols |
+| [`decompile.cpp`](plugins/idax/examples/decompile.cpp) | Decompile the first function (Hex-Rays) |
+
+### Creating a new plugin
+
+Copy `plugins/template/` and follow the [plugin README](plugins/README.md) for a detailed walkthrough.
+
 ## Documentation
 
 | Document | Contents |
@@ -105,7 +149,8 @@ The build produces `idacpp.dll` / `idacpp.so` / `idacpp.dylib`, placed in the ID
 | [install-agent.md](install-agent.md) | Agent prompt for automated build & install |
 | [BUILDING.md](BUILDING.md) | Prerequisites, CMake variables, platform builds, output sizes |
 | [USAGE.md](USAGE.md) | CLI commands, script format, runtime setup, expression evaluator |
-| [examples/](examples/) | Ready-to-run IDA scripts |
+| [examples/](examples/) | Ready-to-run IDA SDK scripts |
+| [plugins/](plugins/) | Plugin system — extending the REPL with additional APIs |
 
 ## Troubleshooting
 

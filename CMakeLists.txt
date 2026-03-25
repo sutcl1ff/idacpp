@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.20)
-project(idacpp CXX)
+project(idacpp VERSION 0.0.2 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -94,85 +94,11 @@ if(MSVC)
   add_compile_definitions($<$<CONFIG:Debug>:_ITERATOR_DEBUG_LEVEL=0>)
 endif()
 
-# ── IDA SDK PCH generation ─────────────────────────────────────────────────
-# Uses clinglite_pchgen to generate a PCH from the IDA SDK headers.
-# The .pch file can be used as a pre-cached PCH on disk.
-#
-# IDAPROPLAT is set by ida-cmake/platform.cmake:
-#   __NT__ (Windows), __LINUX__ (Linux), __MAC__ (macOS)
-
-if(NOT Python3_EXECUTABLE)
-  find_package(Python3 COMPONENTS Interpreter QUIET)
-endif()
-if(NOT Python3_EXECUTABLE)
-  find_program(Python3_EXECUTABLE NAMES python3 python)
-endif()
-
-# Parse ida_sdk.h to extract individual header names for pchgen
-file(STRINGS ${CMAKE_CURRENT_SOURCE_DIR}/ida_sdk.h _ida_hdr_lines
-  REGEX "^#include")
-set(IDA_PCH_HEADERS)
-foreach(_line ${_ida_hdr_lines})
-  string(REGEX REPLACE "^#include [<\"]([^>\"]+)[>\"].*" "\\1" _hdr "${_line}")
-  list(APPEND IDA_PCH_HEADERS "${_hdr}")
-endforeach()
-
-if(IDA_PCH_HEADERS AND TARGET clinglite_pchgen)
-  set(IDA_PCH_FILE "${CMAKE_CURRENT_BINARY_DIR}/ida_sdk.pch")
-
-  add_custom_command(
-    OUTPUT ${IDA_PCH_FILE}
-    COMMAND clinglite_pchgen
-      -I$ENV{IDASDK}/include
-      -D__EA64__=1 -D__IDP__ -D${IDAPROPLAT}
-      -std=c++2b
-      -o ${IDA_PCH_FILE}
-      ${IDA_PCH_HEADERS}
-    DEPENDS clinglite_pchgen ${CMAKE_CURRENT_SOURCE_DIR}/ida_sdk.h
-    COMMENT "Generating IDA SDK PCH with clinglite_pchgen"
-  )
-  add_custom_target(ida_pch DEPENDS ${IDA_PCH_FILE})
-else()
-  message(WARNING "PCH generation disabled — clinglite_pchgen not available or no headers found")
-endif()
-
 # ── Identifier generator tool ─────────────────────────────────────────────
 add_executable(idacpp_idgen tools/idgen.cpp)
 target_link_libraries(idacpp_idgen PRIVATE clinglite)
 if(MSVC)
   target_compile_options(idacpp_idgen PRIVATE /EHsc)
-endif()
-
-# ── Generate IDA SDK identifier table at build time ──────────────────────
-set(IDA_IDGEN_INC "${CMAKE_CURRENT_BINARY_DIR}/ida_sdk_identifiers.inc")
-
-# Find IDA shared libraries for export extraction
-set(_ida_libs)
-foreach(_lib libida.so libidalib.so ida.dll idalib.dll libida.dylib libidalib.dylib)
-  if(EXISTS "$ENV{IDASDK}/bin/${_lib}")
-    list(APPEND _ida_libs "$ENV{IDASDK}/bin/${_lib}")
-  endif()
-endforeach()
-
-if(IDA_PCH_HEADERS AND TARGET idacpp_idgen)
-  set(_idgen_args
-    -I$ENV{IDASDK}/include
-    -D__EA64__=1 -D__IDP__ -D${IDAPROPLAT}
-    -std=c++2b
-    --sdk-dir $ENV{IDASDK}/include
-    -o ${IDA_IDGEN_INC}
-    ${IDA_PCH_HEADERS})
-  if(_ida_libs)
-    list(APPEND _idgen_args --libs ${_ida_libs})
-  endif()
-
-  add_custom_command(
-    OUTPUT ${IDA_IDGEN_INC}
-    COMMAND idacpp_idgen ${_idgen_args}
-    DEPENDS idacpp_idgen ${CMAKE_CURRENT_SOURCE_DIR}/ida_sdk.h
-    COMMENT "Generating IDA SDK identifier table"
-  )
-  add_custom_target(ida_identifiers DEPENDS ${IDA_IDGEN_INC})
 endif()
 
 # ── Shared extlang library ─────────────────────────────────────────────────
@@ -181,10 +107,8 @@ add_library(idacpp_core STATIC extlang_core.cpp idalib_setup.cpp cpp_highlighter
 target_include_directories(idacpp_core PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_include_directories(idacpp_core PRIVATE $ENV{IDASDK}/include)
 target_link_libraries(idacpp_core PUBLIC clinglite)
-
-# Wire generated identifier table into the build
-add_dependencies(idacpp_core ida_identifiers)
-target_include_directories(idacpp_core PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
+target_compile_definitions(idacpp_core PRIVATE
+  IDACPP_VERSION="${PROJECT_VERSION}")
 
 if(MSVC)
   target_compile_options(idacpp_core PRIVATE /EHsc)
@@ -195,9 +119,8 @@ ida_add_plugin(idacpp_plugin
   SOURCES plugin.cpp
   LIBRARIES idacpp_core)
 set_target_properties(idacpp_plugin PROPERTIES OUTPUT_NAME idacpp)
-
-add_dependencies(idacpp_plugin ida_identifiers)
-target_include_directories(idacpp_plugin PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
+target_compile_definitions(idacpp_plugin PRIVATE
+  IDACPP_VERSION="${PROJECT_VERSION}")
 
 if(MSVC)
   target_compile_options(idacpp_plugin PRIVATE /EHsc)
@@ -217,3 +140,8 @@ if(IDASDK)
   target_compile_definitions(idacpp_plugin PRIVATE
     CLINGLITE_DEFAULT_IDASDK="${_idasdk_path}")
 endif()
+
+# ── Plugin system ─────────────────────────────────────────────────────────
+# Discovers plugins, generates dispatch, assembles PCH, builds idgen table.
+# Must come after idacpp_core and idacpp_plugin targets are defined.
+add_subdirectory(plugins)
