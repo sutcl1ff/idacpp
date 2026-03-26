@@ -34,8 +34,7 @@ namespace fs = std::filesystem;
 
 namespace idacpp {
 
-// ── C++ stdlib headers to include in PCH ─────────────────────────────────────
-
+// C++ stdlib headers to include in PCH
 static const char* g_stdHeaders[] = {
     "cstdio", "cstdlib", "cstring", "cstdint", "cmath", "cassert",
     "string", "vector", "map", "set", "unordered_map", "unordered_set",
@@ -44,8 +43,7 @@ static const char* g_stdHeaders[] = {
     "variant", "tuple", "numeric", "iterator", "type_traits",
 };
 
-// ── IDA SDK header list for PCH generation ───────────────────────────────────
-
+// IDA SDK header list for PCH generation
 static const char* g_idaHeaders[] = {
     "pro.h",
     "auto.hpp",
@@ -117,8 +115,7 @@ static const char* g_idaHeaders[] = {
     "xref.hpp"
 };
 
-// ── Public path resolution helpers ───────────────────────────────────────────
-
+// Public path resolution helpers
 std::string resolveClingDir() {
     qstring env;
     if (qgetenv("CLING_DIR", &env) && !env.empty())
@@ -195,8 +192,7 @@ std::string resolveSdkInclude() {
     return {};
 }
 
-// ── Default PCH cache directory ──────────────────────────────────────────────
-
+// Default PCH cache directory
 static fs::path defaultCacheDir() {
     return fs::path(get_user_idadir()) / "idacpp";
 }
@@ -274,8 +270,7 @@ static std::string buildPchCacheKey(
     return oss.str();
 }
 
-// ── preparePCH ───────────────────────────────────────────────────────────────
-
+// preparePCH
 bool preparePCH(clinglite::Options& opts,
                 const std::string& sdkInclude,
                 const std::string& cacheDir_) {
@@ -382,8 +377,7 @@ bool preparePCH(clinglite::Options& opts,
     return true;
 }
 
-// ── initIda ──────────────────────────────────────────────────────────────────
-
+// initIda
 IdaSession initIda(clinglite::Interpreter& interp,
                    const std::string& idaDir,
                    const std::string& dbPath,
@@ -467,8 +461,7 @@ IdaSession initIda(clinglite::Interpreter& interp,
     return session;
 }
 
-// ── termIda ──────────────────────────────────────────────────────────────────
-
+// termIda
 void termIda(clinglite::Interpreter& interp, const IdaSession& session) {
     if (session.libInitialized) {
         idacpp::remove();

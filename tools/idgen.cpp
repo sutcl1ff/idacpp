@@ -114,7 +114,7 @@ int main(int argc, char** argv) {
     // Collect all identifiers into a set for automatic dedup + sort
     std::set<std::string> identifiers;
 
-    // ── AST declarations from headers ───────────────────────────────────
+    // AST declarations from headers
     if (!headers.empty()) {
         clinglite::Environment env(argv[0]);
 
@@ -170,7 +170,7 @@ int main(int argc, char** argv) {
                 decls.size() - filtered, filtered);
     }
 
-    // ── Library exports ─────────────────────────────────────────────────
+    // Library exports
     for (const auto& lib : libs) {
         auto exports =
             clinglite::Interpreter::enumerateLibraryExports(lib);
@@ -188,7 +188,7 @@ int main(int argc, char** argv) {
 
     fprintf(stderr, "Total unique identifiers: %zu\n", identifiers.size());
 
-    // ── Write .inc header ───────────────────────────────────────────────
+    // Write .inc header
     FILE* out = fopen(outputPath.c_str(), "w");
     if (!out) {
         fprintf(stderr, "Error: cannot open %s for writing\n",

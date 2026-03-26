@@ -20,15 +20,13 @@
 
 namespace idacpp {
 
-// ── Globals ────────────────────────────────────────────────────────────────
-
+// Globals
 static clinglite::Interpreter* g_interp = nullptr;
 static std::unique_ptr<clinglite::Session> g_session;
 static std::unique_ptr<clinglite::ScriptRunner> g_runner;
 static RuntimeStatus g_status;
 
-// ── Error helpers ────────────────────────────────────────────────────────
-
+// Error helpers
 /// Fill qstring errbuf from a std::string error message.
 static void fillError(qstring* errbuf, const std::string& error,
                       const char* fallback) {
@@ -48,8 +46,7 @@ static void clearLastError() {
 }
 
 
-// ── Value conversion helpers ───────────────────────────────────────────────
-
+// Value conversion helpers
 static std::string trim_ascii(std::string s) {
     const size_t begin = s.find_first_not_of(" \t\r\n");
     if (begin == std::string::npos)
@@ -326,8 +323,7 @@ static bool eval_snippet_with_optional_wrap(
     return session->evalSnippet(code, error);
 }
 
-// ── extlang_t callbacks ────────────────────────────────────────────────────
-
+// extlang_t callbacks
 static bool idaapi cpp_compile_expr(
     const char* name,
     ea_t /*current_ea*/,
@@ -525,8 +521,7 @@ static bool idaapi cpp_unload_procmod(
     return false;
 }
 
-// ── extlang_t struct ───────────────────────────────────────────────────────
-
+// extlang_t struct
 static extlang_t extlang_cpp = {
     sizeof(extlang_t),
     0,                    // flags
@@ -547,8 +542,7 @@ static extlang_t extlang_cpp = {
     cpp_unload_procmod,
 };
 
-// ── Public API ─────────────────────────────────────────────────────────────
-
+// Public API
 void prepareOptions(clinglite::Options& opts) {
     // IDA SDK platform defines — same as used to build the plugin/PCH
     opts.compilerFlags.push_back("-D__EA64__=1");

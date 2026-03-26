@@ -5,16 +5,14 @@
 // Registers a cli_t (command line interpreter tab) and an extlang_t
 // so IDA's expression evaluator supports C++.
 
-// ── IDA SDK headers ────────────────────────────────────────────────────────
-
+// IDA SDK headers
 #include <pro.h>
 #include <kernwin.hpp>
 #include <expr.hpp>
 #include <loader.hpp>
 #include <idp.hpp>
 
-// ── clinglite + extlang core ───────────────────────────────────────────────
-
+// clinglite + extlang core
 #include "extlang_core.h"
 #include "idalib_setup.h"
 #include "plugins/common/plugin_api.h"
@@ -29,8 +27,7 @@
 
 #include "ida_sdk_identifiers.inc"
 
-// ── Forward declarations ───────────────────────────────────────────────────
-
+// Forward declarations
 struct idacpp_t;
 static idacpp_t* g_plugin = nullptr;
 
@@ -67,7 +64,6 @@ struct idacpp_t : public plugmod_t {
     bool extlang_installed = false;
     bool cli_installed = false;
     bool sdk_headers_ready = false;
-    bool ida_runtime_resolved = false;
 
     idacpp_t() = default;
     ~idacpp_t() override;
@@ -82,7 +78,7 @@ bool idacpp_t::init_plugin() {
     clinglite::Options opts;
     opts.args = {"idacpp"};
 
-    // ── Resolve IDA SDK include directory ────────────────────────────────
+    // Resolve IDA SDK include directory
     std::string sdkInclude;
     qstring idasdk_buf;
     bool have_sdk = qgetenv("IDASDK", &idasdk_buf);
@@ -112,7 +108,7 @@ bool idacpp_t::init_plugin() {
         opts.includePaths.push_back(sdkInclude);
     }
 
-    // ── Resolve Cling/LLVM build tree ────────────────────────────────────
+    // Resolve Cling/LLVM build tree
     {
         qstring cling_dir_buf;
         if (qgetenv("CLING_DIR", &cling_dir_buf))
@@ -193,13 +189,11 @@ bool idacpp_t::init_plugin() {
             if (!loaded)
                 loaded = (interp->loadLibrary(lib) ==
                           clinglite::ExecResult::Success);
-            if (loaded)
-                ida_runtime_resolved = true;
-            else
+            if (!loaded) {
                 all_libs_loaded = false;
-            if (!loaded)
                 msg("idacpp: note: could not confirm runtime symbol load for %s\n",
                     lib);
+            }
         }
     }
 
@@ -244,8 +238,11 @@ bool idacpp_t::init_plugin() {
         }
     }
 
-    // Run extension plugin setup (idax, winsdk, etc.)
-    idacpp::plugins::setupAll(*interp, hasPch);
+    // Run extension plugin setup
+    clinglite::PluginSetupOptions pluginOpts;
+    pluginOpts.hasPch = hasPch;
+    clinglite::plugins::setupAll(*interp, pluginOpts);   // generic (linux, winsdk)
+    idacpp::plugins::setupAll(*interp, pluginOpts);      // IDA-specific (qt6, idax)
 
     g_plugin = this;  // set before registering callbacks that use g_plugin
 
@@ -258,12 +255,14 @@ bool idacpp_t::init_plugin() {
     install_command_interpreter(&cli_cpp);
     cli_installed = true;
 
-    // ── Startup banner ────────────────────────────────────────────────────
+    // Startup banner
     {
         auto clingVer = clinglite::Environment::version();
 
-        // Build plugin list: ida_sdk (always) + extension plugins
+        // Build plugin list: ida_sdk (always) + clinglite + idacpp plugins
         std::string plugins = "ida_sdk";
+        for (const auto& name : clinglite::plugins::pluginNames())
+            plugins += ", " + name;
         for (const auto& name : idacpp::plugins::pluginNames())
             plugins += ", " + name;
 
@@ -296,8 +295,7 @@ bool idaapi idacpp_t::run(size_t /*arg*/) {
     return true;
 }
 
-// ── cli_execute_line (needs complete idacpp_t) ────────────────────────────
-
+// cli_execute_line (needs complete idacpp_t)
 static bool idaapi cli_execute_line(const char* line) {
     auto* session = idacpp::getSession();
     if (!session)
@@ -315,8 +313,7 @@ static bool idaapi cli_execute_line(const char* line) {
     return indent <= 0;
 }
 
-// ── cli_find_completions (needs complete idacpp_t) ────────────────────────
-
+// cli_find_completions (needs complete idacpp_t)
 static const char* const s_dotCommands[] = {
     ".L", ".x", ".X", ".U", ".I", ".include",
     ".O", ".class", ".Class", ".namespace", ".typedef",

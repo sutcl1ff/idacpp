@@ -8,7 +8,7 @@
 
 include("${CMAKE_CURRENT_SOURCE_DIR}/../common/idacpp_plugin_helpers.cmake")
 
-# ── Validate inputs ──────────────────────────────────────────────────────
+# Validate inputs
 if(NOT PLUGIN_IDAX_SRC_DIR)
     message(FATAL_ERROR
         "idax plugin requires -DPLUGIN_IDAX_SRC_DIR=<path-to-idax>\n"
@@ -25,10 +25,10 @@ endif()
 
 message(STATUS "idax plugin: ${PLUGIN_IDAX_SRC_DIR}")
 
-# ── Find Python (needed by gen_exports_def.py for shared lib .def generation)
+# Find Python (needed by gen_exports_def.py for shared lib .def generation)
 find_package(Python3 COMPONENTS Interpreter REQUIRED)
 
-# ── Ensure idasdk_headers target exists ──────────────────────────────────
+# Ensure idasdk_headers target exists
 # idax expects an idasdk_headers INTERFACE target providing SDK includes.
 # When built standalone via idax's own CMakeLists.txt it creates this target,
 # but here we build idax sources directly, so create it if missing.
@@ -42,7 +42,7 @@ if(NOT TARGET idasdk_headers)
         ida_compiler_settings)
 endif()
 
-# ── Build idax static library ────────────────────────────────────────────
+# Build idax static library
 file(GLOB_RECURSE _idax_srcs CONFIGURE_DEPENDS
     "${PLUGIN_IDAX_SRC_DIR}/src/*.cpp")
 
@@ -61,12 +61,12 @@ else()
     target_compile_options(idax_plugin_static PRIVATE -Wall -Wextra -Wpedantic)
 endif()
 
-# ── Shared variant for JIT loading ───────────────────────────────────────
-idacpp_plugin_make_shared(idax_plugin_shared idax_plugin_static
+# Shared variant for JIT loading
+clinglite_plugin_make_shared(idax_plugin_shared idax_plugin_static
     LINK_LIBS idasdk::idalib)
 
-# ── PCH bridge (undoes pro.h poison, then includes idax) ─────────────────
-idacpp_plugin_generate_pch_bridge(
+# PCH bridge (undoes pro.h poison, then includes idax)
+clinglite_plugin_generate_pch_bridge(
     "${CMAKE_CURRENT_BINARY_DIR}/idax_pch_bridge.h"
     UNDEFS snprintf sprintf getenv
     HEADERS ida/idax.hpp)
@@ -75,7 +75,7 @@ idacpp_plugin_extend_pch(
     FLAGS "-I${_idax_inc}" "-I${CMAKE_CURRENT_BINARY_DIR}"
     HEADERS idax_pch_bridge.h)
 
-# ── Setup source (baked paths via compile definitions) ────────────────────
+# Setup source (baked paths via compile definitions)
 add_library(idax_plugin_init OBJECT
     "${CMAKE_CURRENT_SOURCE_DIR}/idax_plugin_setup.cpp")
 target_link_libraries(idax_plugin_init PRIVATE clinglite)
@@ -88,7 +88,7 @@ if(MSVC)
     target_compile_options(idax_plugin_init PRIVATE /EHsc)
 endif()
 
-# ── Register with dispatch system ─────────────────────────────────────────
+# Register with dispatch system
 idacpp_register_plugin(idax
     idax_plugin_setup
     "${CMAKE_CURRENT_SOURCE_DIR}/idax_plugin_setup.h"

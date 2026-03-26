@@ -8,8 +8,7 @@
 
 include("${CMAKE_CURRENT_SOURCE_DIR}/../common/idacpp_plugin_helpers.cmake")
 
-# ── Qt6 discovery (layered, first match wins) ────────────────────────────
-
+# Qt6 discovery (layered, first match wins)
 # (a) Explicit override via -DPLUGIN_QT6_DIR
 if(PLUGIN_QT6_DIR)
     file(TO_CMAKE_PATH "${PLUGIN_QT6_DIR}" PLUGIN_QT6_DIR)
@@ -43,8 +42,7 @@ if(NOT Qt6_FOUND)
     return()
 endif()
 
-# ── Validate found Qt6 ──────────────────────────────────────────────────
-
+# Validate found Qt6
 # If PLUGIN_QT6_DIR was set, the resolved Qt6 must come from that prefix.
 if(PLUGIN_QT6_DIR)
     file(REAL_PATH "${PLUGIN_QT6_DIR}" _qt6_override_real)
@@ -69,7 +67,7 @@ endif()
 
 message(STATUS "qt6 plugin: Qt6 ${Qt6_VERSION} found")
 
-# ── Extract Qt6 paths ────────────────────────────────────────────────────
+# Extract Qt6 paths
 # Derive the Qt install prefix from Qt6_DIR (set by find_package).
 # Qt6_DIR is typically <prefix>/lib/cmake/Qt6, so go up 3 levels.
 get_filename_component(_qt6_prefix "${Qt6_DIR}/../../.." ABSOLUTE)
@@ -85,7 +83,7 @@ foreach(_comp Core Gui Widgets)
 endforeach()
 list(REMOVE_DUPLICATES _qt6_all_inc_dirs)
 
-# ── Resolve Qt6 runtime libraries from IDABIN ───────────────────────────
+# Resolve Qt6 runtime libraries from IDABIN
 # Use IDA's copies (what IDA actually loads at runtime), not qt-install.
 # Resolve actual filenames via glob to handle versioned names (e.g. .so.6).
 if(NOT DEFINED IDABIN)
@@ -119,33 +117,12 @@ message(STATUS "qt6 plugin: core=${_qt6_core_lib}")
 message(STATUS "qt6 plugin: gui=${_qt6_gui_lib}")
 message(STATUS "qt6 plugin: widgets=${_qt6_widgets_lib}")
 
-# ── PCH bridge (manual — need #define before #include) ───────────────────
-# idacpp_plugin_generate_pch_bridge() only supports UNDEFS + HEADERS;
-# Qt requires QT_NAMESPACE=QT defined before any Qt header inclusion.
-set(_bridge "${CMAKE_CURRENT_BINARY_DIR}/qt6_pch_bridge.h")
-file(WRITE "${_bridge}"
-"// Auto-generated PCH bridge for idacpp qt6 plugin\n\
-#undef snprintf\n\
-#undef sprintf\n\
-#undef getenv\n\
-#ifndef QT_NAMESPACE\n\
-#define QT_NAMESPACE QT\n\
-#endif\n\
-#ifndef QT_CORE_LIB\n\
-#define QT_CORE_LIB\n\
-#endif\n\
-#ifndef QT_GUI_LIB\n\
-#define QT_GUI_LIB\n\
-#endif\n\
-#ifndef QT_WIDGETS_LIB\n\
-#define QT_WIDGETS_LIB\n\
-#endif\n\
-#ifndef QT_DLL\n\
-#define QT_DLL\n\
-#endif\n\
-#include <QtCore/QtCore>\n\
-#include <QtGui/QtGui>\n\
-#include <QtWidgets/QtWidgets>\n")
+# PCH bridge (undoes pro.h poison, defines Qt namespace, includes Qt headers)
+clinglite_plugin_generate_pch_bridge(
+    "${CMAKE_CURRENT_BINARY_DIR}/qt6_pch_bridge.h"
+    UNDEFS snprintf sprintf getenv
+    DEFINES QT_NAMESPACE=QT QT_CORE_LIB QT_GUI_LIB QT_WIDGETS_LIB QT_DLL
+    HEADERS QtCore/QtCore QtGui/QtGui QtWidgets/QtWidgets)
 
 # Build PCH flags from all Qt include directories
 set(_qt6_pch_flags)
@@ -164,7 +141,7 @@ idacpp_plugin_extend_pch(
         "-DQT_DLL"
     HEADERS qt6_pch_bridge.h)
 
-# ── Setup source (baked paths via compile definitions) ────────────────────
+# Setup source (baked paths via compile definitions)
 add_library(qt6_plugin_init OBJECT
     "${CMAKE_CURRENT_SOURCE_DIR}/qt6_plugin_setup.cpp")
 target_link_libraries(qt6_plugin_init PRIVATE clinglite)
@@ -178,7 +155,7 @@ if(MSVC)
     target_compile_options(qt6_plugin_init PRIVATE /EHsc)
 endif()
 
-# ── Register with dispatch system ─────────────────────────────────────────
+# Register with dispatch system
 idacpp_register_plugin(qt6
     qt6_plugin_setup
     "${CMAKE_CURRENT_SOURCE_DIR}/qt6_plugin_setup.h"

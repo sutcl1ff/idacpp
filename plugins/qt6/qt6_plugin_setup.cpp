@@ -21,7 +21,7 @@
 #error "IDACPP_PLUGIN_QT6_WIDGETS_LIB not defined — check plugin CMakeLists.txt"
 #endif
 
-void qt6_plugin_setup(clinglite::Interpreter& interp, bool /*hasPch*/) {
+void qt6_plugin_setup(clinglite::Interpreter& interp, clinglite::PluginSetupOptions& /*opts*/) {
     // Load Qt6 shared libraries for JIT symbol resolution.
     // IDA has already loaded these DLLs; this tells Cling's JIT where to
     // find Qt symbols. Paths baked at compile time by the plugin's CMakeLists.txt.
@@ -45,11 +45,8 @@ void qt6_plugin_setup(clinglite::Interpreter& interp, bool /*hasPch*/) {
     // Add Qt6 include path for header resolution
     interp.addIncludePath(IDACPP_PLUGIN_QT6_INCLUDE_DIR);
 
-    // Undo pro.h macro poisoning (snprintf→dont_use_snprintf, etc.)
-    // These are no-ops if the macros are already undefined (PCH case).
-    interp.execute("#undef snprintf");
-    interp.execute("#undef sprintf");
-    interp.execute("#undef getenv");
+    // Undo pro.h macro poisoning (no-op if already undefined via PCH).
+    clinglite::undoProhPoisoning(interp);
 
     // IDA's Qt is always built with QT_NAMESPACE=QT.
     // Define it so all Qt headers put classes in the QT namespace.

@@ -1,10 +1,10 @@
 cmake_minimum_required(VERSION 3.20)
-project(idacpp VERSION 0.0.3 LANGUAGES CXX)
+project(idacpp VERSION 0.0.4 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# ── CRT policy: static CRT (/MT) to match LLVM and produce self-contained DLLs
+# CRT policy: static CRT (/MT) to match LLVM and produce self-contained DLLs
 # CMP0091 NEW enables the MSVC_RUNTIME_LIBRARY target property so we can
 # force /MT for all configs (including Debug) to match the LLVM libs.
 # Must be set before add_subdirectory(clinglite) so clinglite targets inherit.
@@ -15,7 +15,7 @@ if(MSVC)
     "MSVC runtime library — /MT for fully static plugin binary" FORCE)
 endif()
 
-# ── Locate clinglite source directory ─────────────────────────────────────
+# Locate clinglite source directory
 # Priority: 1) -DCLINGLITE_SOURCE_DIR  2) env CLINGLITE_SOURCE_DIR
 if(NOT CLINGLITE_SOURCE_DIR)
   if(DEFINED ENV{CLINGLITE_SOURCE_DIR})
@@ -29,7 +29,7 @@ if(NOT CLINGLITE_SOURCE_DIR)
 endif()
 message(STATUS "clinglite source: ${CLINGLITE_SOURCE_DIR}")
 
-# ── Cling build directory (optional pass-through to clinglite) ────────────
+# Cling build directory (optional pass-through to clinglite)
 if(NOT CLING_BUILD_DIR)
   if(DEFINED ENV{CLING_BUILD_DIR})
     set(CLING_BUILD_DIR "$ENV{CLING_BUILD_DIR}")
@@ -37,14 +37,14 @@ if(NOT CLING_BUILD_DIR)
   # If still unset, clinglite's own CMake will attempt discovery or error.
 endif()
 
-# ── clinglite library ──────────────────────────────────────────────────────
+# clinglite library
 # Guard: clinglite may already be a target (monorepo inclusion)
 if(NOT TARGET clinglite)
   set(CMAKE_POSITION_INDEPENDENT_CODE ON)
   add_subdirectory("${CLINGLITE_SOURCE_DIR}" clinglite)
 endif()
 
-# ── Clang resource dir (propagated from clinglite, with fallback) ─────────
+# Clang resource dir (propagated from clinglite, with fallback)
 # CLINGLITE_CLANG_BUILTIN_DIR and CLINGLITE_CLANG_RESOURCE_VERSION are
 # propagated by clinglite via PARENT_SCOPE.  Fall back to manual derivation
 # only when clinglite was already a target before our add_subdirectory().
@@ -59,7 +59,7 @@ if(NOT CLINGLITE_CLANG_BUILTIN_DIR AND CLING_BUILD_DIR)
   endforeach()
 endif()
 
-# ── IDA SDK (required) ────────────────────────────────────────────────────
+# IDA SDK (required)
 # Accept IDASDK as cmake variable (-DIDASDK=...) or env variable
 if(DEFINED IDASDK AND NOT DEFINED ENV{IDASDK})
   set(ENV{IDASDK} "${IDASDK}")
@@ -81,7 +81,7 @@ if(NOT TARGET ida_platform_settings)
 endif()
 message(STATUS "IDA SDK found: $ENV{IDASDK}")
 
-# ── Restore /MT after IDA SDK bootstrap ──────────────────────────────────
+# Restore /MT after IDA SDK bootstrap
 # IDA SDK's platform.cmake sets CMAKE_MSVC_RUNTIME_LIBRARY to /MT with a
 # Debug genex. Override to unconditional /MT so all configs match the
 # Release LLVM static libs. The VS generator adds /D_DEBUG for Debug
@@ -94,14 +94,14 @@ if(MSVC)
   add_compile_definitions($<$<CONFIG:Debug>:_ITERATOR_DEBUG_LEVEL=0>)
 endif()
 
-# ── Identifier generator tool ─────────────────────────────────────────────
+# Identifier generator tool
 add_executable(idacpp_idgen tools/idgen.cpp)
 target_link_libraries(idacpp_idgen PRIVATE clinglite)
 if(MSVC)
   target_compile_options(idacpp_idgen PRIVATE /EHsc)
 endif()
 
-# ── Shared extlang library ─────────────────────────────────────────────────
+# Shared extlang library
 # Static library used by both the plugin and standalone consumers.
 add_library(idacpp_core STATIC extlang_core.cpp idalib_setup.cpp cpp_highlighter.cpp)
 target_include_directories(idacpp_core PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
@@ -114,7 +114,7 @@ if(MSVC)
   target_compile_options(idacpp_core PRIVATE /EHsc)
 endif()
 
-# ── Plugin target ─────────────────────────────────────────────────────────
+# Plugin target
 ida_add_plugin(idacpp_plugin
   SOURCES plugin.cpp
   LIBRARIES idacpp_core)
@@ -141,7 +141,7 @@ if(IDASDK)
     CLINGLITE_DEFAULT_IDASDK="${_idasdk_path}")
 endif()
 
-# ── Plugin system ─────────────────────────────────────────────────────────
+# Plugin system
 # Discovers plugins, generates dispatch, assembles PCH, builds idgen table.
 # Must come after idacpp_core and idacpp_plugin targets are defined.
 add_subdirectory(plugins)

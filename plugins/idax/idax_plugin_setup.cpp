@@ -15,7 +15,7 @@
 #error "IDACPP_PLUGIN_IDAX_SHARED_LIB not defined — check plugin CMakeLists.txt"
 #endif
 
-void idax_plugin_setup(clinglite::Interpreter& interp, bool /*hasPch*/) {
+void idax_plugin_setup(clinglite::Interpreter& interp, clinglite::PluginSetupOptions& /*opts*/) {
     // Load idax shared library for JIT symbol resolution.
     // Path baked at compile time by the plugin's CMakeLists.txt.
     const char* sharedLib = IDACPP_PLUGIN_IDAX_SHARED_LIB;
@@ -29,11 +29,8 @@ void idax_plugin_setup(clinglite::Interpreter& interp, bool /*hasPch*/) {
     const char* includeDir = IDACPP_PLUGIN_IDAX_INCLUDE_DIR;
     interp.addIncludePath(includeDir);
 
-    // Undo pro.h macro poisoning (snprintf→dont_use_snprintf, etc.)
-    // These are no-ops if the macros are already undefined (PCH case).
-    interp.execute("#undef snprintf");
-    interp.execute("#undef sprintf");
-    interp.execute("#undef getenv");
+    // Undo pro.h macro poisoning (no-op if already undefined via PCH).
+    clinglite::undoProhPoisoning(interp);
 
     // Include idax master header — hits include guards if already in PCH.
     if (!interp.includeHeader("ida/idax.hpp"))

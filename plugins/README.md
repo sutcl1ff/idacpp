@@ -1,62 +1,61 @@
 # idacpp Plugin System
 
-Plugins extend the idacpp REPL with additional headers, libraries, and PCH
-contributions. Each plugin lives in its own subdirectory and is self-contained.
+IDA-specific plugins that extend the idacpp REPL. Built on top of clinglite's
+generic plugin infrastructure (`clinglite/plugins/common/clinglite_plugin_helpers.cmake`).
+
+Generic platform plugins (linux, winsdk) live in clinglite. This directory
+contains only IDA-specific plugins.
 
 ## Directory Layout
 
 | Directory | Type | Description |
 |-----------|------|-------------|
-| `common/` | Framework | Shared cmake helpers and public API header |
+| `common/` | Framework | Thin wrappers around clinglite helpers + public API header |
 | `ida_sdk/` | Built-in | IDA SDK header list — always enabled, loads first |
 | `idax/` | Extension | C++23 IDA SDK wrapper (`-DPLUGIN_IDAX_SRC_DIR=<path>`) |
 | `qt6/` | Extension | Qt6 support — Core, Gui, Widgets (`-DPLUGIN_QT6=ON`) |
-| `winsdk/` | Extension | Windows SDK headers |
-| `template/` | Skeleton | Copy this to create a new plugin |
 
 ## Creating a New Plugin
 
-1. Copy `template/` to `plugins/<your-name>/`
-2. Rename placeholders (`<PLUGIN_NAME>`, `<plugin_name>`)
-3. Implement `CMakeLists.txt` using the shared helpers
-4. Implement the setup function in `<name>_plugin_setup.cpp`
-5. Enable with `-DPLUGIN_<YOUR_NAME>_SRC_DIR=<path>`
+See `clinglite/plugins/template/` for a detailed walkthrough.
 
-See [`template/README.md`](template/README.md) for a detailed walkthrough.
+1. Copy the template to `plugins/<your-name>/`
+2. Rename placeholders (`<PLUGIN_NAME>`, `<plugin_name>`)
+3. Use `idacpp_register_plugin()` / `idacpp_plugin_extend_pch()` for IDA dispatch
+4. Use `clinglite_plugin_generate_pch_bridge()` / `clinglite_plugin_make_shared()` directly
+5. Enable with `-DPLUGIN_<YOUR_NAME>_SRC_DIR=<path>`
 
 ## How It Works
 
 1. **Discovery**: `plugins/CMakeLists.txt` scans for `*/CMakeLists.txt` and
-   includes each directory whose `PLUGIN_<NAME>` variable is `ON`. Plugins
-   with a `_SRC_DIR` variable are auto-enabled when the source dir is provided.
-2. **Registration**: Each plugin calls `idacpp_register_plugin()` to register
-   a setup function. The framework collects these into a generated
-   `plugin_dispatch.cpp` with a single `setupAll()` entry point.
-3. **PCH assembly**: Plugins call `idacpp_plugin_extend_pch()` to contribute
-   headers and include flags. The framework assembles one PCH from all
-   contributions (IDA SDK base + extension plugins).
-4. **Runtime setup**: After interpreter initialization, `setupAll()` calls
-   each plugin's setup function with the interpreter instance. Plugins use
-   baked compile-time paths to load shared libraries and include headers.
+   includes each directory whose `PLUGIN_<NAME>` variable is `ON`.
+2. **Registration**: Each plugin calls `idacpp_register_plugin()` (thin wrapper
+   around clinglite's `_clinglite_plugin_register_impl(IDACPP, ...)`).
+3. **Dispatch**: `clinglite_generate_plugin_dispatch(IDACPP ...)` generates
+   `plugin_dispatch.cpp` with `idacpp::plugins::setupAll()`.
+4. **PCH assembly**: Merges clinglite plugin + idacpp plugin PCH contributions.
+5. **Runtime**: `clinglite::plugins::setupAll()` runs first (generic plugins),
+   then `idacpp::plugins::setupAll()` (IDA-specific plugins).
 
-## Shared Helpers (`common/idacpp_plugin_helpers.cmake`)
+## Helpers
 
-| Function | Purpose |
-|----------|---------|
-| `idacpp_register_plugin(name fn header source)` | Register setup function with dispatch |
-| `idacpp_plugin_extend_pch(FLAGS ... HEADERS ...)` | Add headers/flags to shared PCH |
-| `idacpp_plugin_generate_pch_bridge(file UNDEFS ... HEADERS ...)` | Generate `#undef` + `#include` bridge header |
-| `idacpp_plugin_make_shared(target static_lib LINK_LIBS ...)` | Wrap static archive as shared lib for JIT |
+| Function | Source | Purpose |
+|----------|--------|---------|
+| `idacpp_register_plugin()` | idacpp wrapper | Register with IDACPP dispatch |
+| `idacpp_plugin_extend_pch()` | idacpp wrapper | Add to IDACPP PCH contributions |
+| `clinglite_plugin_generate_pch_bridge()` | clinglite | Generate bridge header |
+| `clinglite_plugin_make_shared()` | clinglite | Wrap static→shared for JIT |
+| `clinglite_generate_plugin_dispatch()` | clinglite | Generate dispatch .cpp |
 
 ## Plugin Load Order
 
-1. **ida_sdk** (built-in) — IDA SDK headers and libraries via `idalib_setup.cpp`
-2. **Extension plugins** — in directory scan order, via generated `setupAll()`
+1. **clinglite plugins** — generic (linux, winsdk) via `clinglite::plugins::setupAll()`
+2. **ida_sdk** (built-in) — IDA SDK headers and libraries via `idalib_setup.cpp`
+3. **idacpp plugins** — IDA-specific (qt6, idax) via `idacpp::plugins::setupAll()`
 
 ## Conventions
 
-- Plugin cmake variables use the `PLUGIN_<NAME>_` prefix (e.g. `PLUGIN_IDAX_SRC_DIR`)
-- Setup functions are named `<name>_plugin_setup(clinglite::Interpreter&, bool hasPch)`
+- Plugin cmake variables use the `PLUGIN_<NAME>_` prefix
+- Setup functions: `<name>_plugin_setup(clinglite::Interpreter&, clinglite::PluginSetupOptions&)`
 - All setup operations should be idempotent (safe to call with or without PCH)
-- Plugins that layer on top of `pro.h` should use `idacpp_plugin_generate_pch_bridge()`
-  to `#undef` poisoned macros before including their headers
+- Plugins that layer on top of `pro.h` use `clinglite_plugin_generate_pch_bridge()`
